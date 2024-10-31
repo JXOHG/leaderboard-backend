@@ -30,10 +30,10 @@ def combine_and_replace_csv():
     # Remove negative Total Steps
     combined_df['Total Steps'] = combined_df['Total Steps'].astype('int')
     combined_df = combined_df[combined_df['Total Steps'] >= 0]
-    combined_df['Total Steps'] = combined_df['Total Steps'].astype('str')
 
     # Record total steps in current_steps.txt
     total_steps = combined_df['Total Steps'].sum()
+    combined_df['Total Steps'] = combined_df['Total Steps'].astype('str')
     with open('public/current_steps.txt', 'w') as f:
         f.write(str(total_steps))
 
