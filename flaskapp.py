@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
@@ -6,6 +6,7 @@ import os
 from flask_cors import CORS
 from io import StringIO
 import json
+
 
 app = Flask(__name__)
 CORS(app)
@@ -69,48 +70,56 @@ def save_users(username, password):
             
 
 # handles csv file upload
-@app.route("/csv", methods=['POST'])
+@app.route("/csv", methods=['GET', 'POST'])
 def csv():
+    if request.method == 'POST':
+        f = request.files['file']
 
-  if request.method == 'POST':
-      f = request.files['file']
+        # Extracting uploaded file name
+        data_filename = secure_filename(f.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], data_filename)
 
-      # Extracting uploaded file name
-      data_filename = secure_filename(f.filename)
-      file_path = os.path.join(app.config['UPLOAD_FOLDER'], data_filename)
+        # Saves the file to a temporary csv
+        f.save(file_path)
+        os.rename(file_path, os.path.join(app.config['UPLOAD_FOLDER'], 'temp.csv'))
+        try:
+            # Opens the csv into a dataframe to be modified by pandas
+            df = pd.read_csv("public/temp.csv")
 
-      #saves the file to a temporary csv
-      f.save(file_path)
-      os.rename(file_path, os.path.join(app.config['UPLOAD_FOLDER'], 'temp.csv'))
-      try:
-        #opens the csv into a dataframe to be modified by pandas
-        df = pd.read_csv("public/temp.csv")
-        
-        #checks if csv has the correct columns
-        if set(['Name', 'Total Steps', "Avg Daily Steps"]).issubset(df.columns):
-          #extract neccessary columns
-          df = df[["Name", "Total Steps", "Avg Daily Steps"]]
-          #sort by total steps
-          df = df.sort_values(by="Total Steps", axis=0, ascending=False)
-          #write file to submit.csv so it can be combined with manual.csv later
-          df.to_csv("public/submit.csv", index=False)
-          
-          # Merges manual.csv with submit.csv
-          combine_and_replace_csv()
-          
-          os.remove("public/temp.csv")
+            # Checks if csv has the correct columns
+            if set(['Name', 'Total Steps', "Avg Daily Steps"]).issubset(df.columns):
+                # Extract necessary columns
+                df = df[["Name", "Total Steps", "Avg Daily Steps"]]
+                # Sort by total steps
+                df = df.sort_values(by="Total Steps", ascending=False)
+                # Write file to submit.csv
+                df.to_csv("public/submit.csv", index=False)
+
+                # Merges manual.csv with submit.csv
+                combine_and_replace_csv()
+
+                os.remove("public/temp.csv")
+            else:
+                # Incorrect csv file submitted
+                os.remove("public/temp.csv")
+                return jsonify({"message": "Wrong CSV file"}), 400
+        except Exception as e:
+            # Handle any errors
+            if os.path.isfile('public/temp.csv'):
+                os.remove("public/temp.csv")
+            return jsonify({"message": "Error processing file", "error": str(e)}), 500
+
+        return jsonify({"message": "File uploaded successfully"}), 200
+
+    # Handle GET request
+    elif request.method == 'GET':
+        # Serve the combined CSV file (main.csv)
+        if os.path.isfile("public/main.csv"):
+            return send_file("public/main.csv", mimetype='text/csv', as_attachment=True)
         else:
-          #incorrect csv file submitted (wrong columns)
-          os.remove("public/temp.csv")
-          return jsonify({"message": "wrong csv file"}), 400
-      except:
-        #if there is any error, remove temp.csv if it exists
-        #if temp.csv is not deleted and a new csv is uploaded
-        #the server will stop working
-        if os.path.isfile('public/temp.csv'):
-          os.remove("public/temp.csv")
-      return jsonify({"message": "File uploaded successfully"}), 200
-  return jsonify({"message": "File did not upload successfully"}), 400
+            return jsonify({"message": "No combined CSV file available."}), 404
+
+    return jsonify({"message": "Invalid request"}), 400
 
 @app.route("/manual", methods=['POST'])
 def manual():
