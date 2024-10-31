@@ -1,0 +1,5 @@
+Flask
+pandas
+Flask-Cors
+gunicorn
+werkzeug
