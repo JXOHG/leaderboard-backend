@@ -36,10 +36,10 @@ def combine_and_replace_csv():
     # Delete anyone with negative number steps
     combined_df['Total Steps'] = combined_df['Total Steps'].astype('int')
     combined_df = combined_df[combined_df['Total Steps'] >= 0]
-    combined_df['Total Steps'] = combined_df['Total Steps'].astype('str')
     
     # Record the total amount of steps into a current_steps.txt file
     total_steps = combined_df['Total Steps'].sum()
+    combined_df['Total Steps'] = combined_df['Total Steps'].astype('str')
     with open('public/current_steps.txt', 'w') as f:
         f.write(str(total_steps))
         
@@ -221,7 +221,7 @@ def stepGoal():
     if request.method == 'GET':
         # Read the current step goal from the file if it exists
         if os.path.isfile(STEP_GOAL_FILE):
-            with open(CURRENT_STEP_FILE, 'r') as f:
+            with open(STEP_GOAL_FILE, 'r') as f:
                 step_goal = f.read().strip()
                 return jsonify({"step_goal": int(step_goal)}), 200
     
