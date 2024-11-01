@@ -182,22 +182,41 @@ def login():
 def changepw():
     if request.method == 'POST':
         #get dictionary of {username:password}
-        users = load_users()
-        
-        userpass = request.data.decode('utf-8')
-        userpass = userpass.split()
-        
-        uname = userpass[0]
-        pw = userpass[1]
-        
-        #hash password here
-        hashed_pw = generate_password_hash(pw)
-        
         try:
-            save_users(uname, hashed_pw)    
-        except:    
-            return jsonify({"message": "Failed to load users"}), 400
-        return jsonify({"message": "Password updated!"}), 200
+            users = load_users()
+        except:
+            return jsonify({"message": "Failed to load user data"}), 400
+        uname = request.json["username"]
+        pw_old = request.json["oldPassword"]
+        pw_new = request.json["newPassword"]
+        
+        if uname in users and check_password_hash(users[uname], pw_old):
+            try:
+                hashed_pw = generate_password_hash(pw_new)
+                save_users(uname, hashed_pw)    
+            except:    
+                return jsonify({"message": "Failed to write pas"}), 400
+            
+            return jsonify({"message": "Password updated!"}), 200
+        else:
+            return jsonify({"message": 'Incorrect username or password combo. Please try again.'}), 400
+        
+"""       df = pd.read_csv(csvStr, sep=',', header = None)
+      print(df) """
+      
+CURRENT_STEP_FILE = 'public/current_steps.txt'
+
+# New route to get and set the current steps
+@app.route("/current_steps", methods=['GET'])
+def curSteps():
+    if request.method == 'GET':
+        # Read the current steps from the file if it exists
+        if os.path.isfile(CURRENT_STEP_FILE):
+            with open(CURRENT_STEP_FILE, 'r') as f:
+                current_steps = f.read().strip()
+                return jsonify({"current_steps": int(current_steps)}), 200
+        else:
+            return jsonify({"steps": 0}), 200  # Default steps if file doesn't exist
         
 """       df = pd.read_csv(csvStr, sep=',', header = None)
       print(df) """
