@@ -13,6 +13,9 @@ CORS(app)
 
 UPLOAD_FOLDER = 'public'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+@app.route("/ping", methods=["GET"])
+def ping():
+    return jsonify({"message": "Server is active"}), 200
 
 # Helper function to merge manual and submit csv files
 def combine_and_replace_csv():
