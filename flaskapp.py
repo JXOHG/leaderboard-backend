@@ -206,21 +206,7 @@ def changepw():
       
 CURRENT_STEP_FILE = 'public/current_steps.txt'
 
-# New route to get and set the current steps
-@app.route("/current_steps", methods=['GET'])
-def curSteps():
-    if request.method == 'GET':
-        # Read the current steps from the file if it exists
-        if os.path.isfile(CURRENT_STEP_FILE):
-            with open(CURRENT_STEP_FILE, 'r') as f:
-                current_steps = f.read().strip()
-                return jsonify({"current_steps": int(current_steps)}), 200
-        else:
-            return jsonify({"steps": 0}), 200  # Default steps if file doesn't exist
-        
-"""       df = pd.read_csv(csvStr, sep=',', header = None)
-      print(df) """
-      
+
 CURRENT_STEP_FILE = 'public/current_steps.txt'
 
 # New route to get and set the current steps
