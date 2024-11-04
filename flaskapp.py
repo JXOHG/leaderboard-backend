@@ -6,11 +6,21 @@ import os
 from flask_cors import CORS
 from io import StringIO
 import json
+import time
+from threading import Timer
 
 
 app = Flask(__name__)
 CORS(app)
 
+# Helper function to simulate file activity for Render
+def keep_active():
+    with open('public/keep_active.log', 'a') as f:
+        f.write(f"Ping at {time.ctime()}\n")  # Append timestamp to keep file updated
+    Timer(180, keep_active).start()  # Schedule next run in 5 minutes
+
+
+keep_active()
 UPLOAD_FOLDER = 'public'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @app.route("/ping", methods=["GET"])
